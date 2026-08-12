@@ -1,720 +1,403 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Maximize2,
-  Minimize2,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
-  ShieldCheck,
-  FileText,
-  Sparkles,
-  Cpu,
-  Lock,
-  Mail,
-  ArrowRight,
-  ExternalLink,
-  Scale,
-  HeartHandshake,
-  FileUp,
-  RotateCcw,
-  Zap,
-  Check,
-  AlertCircle
-} from "lucide-react";
-import { WordRotate } from "@/components/ui/word-rotate";
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from "recharts";
+import { ShieldCheck, CheckCircle2, Clock, FileText, Lock, Sparkles, ExternalLink, ArrowRight } from "lucide-react";
 
-const SLIDES = [
-  { id: "portada", title: "Portada" },
-  { id: "problema", title: "El Problema" },
-  { id: "cifras", title: "Las Cifras Invisibles" },
-  { id: "pitch", title: "El Pitch & Solución" },
-  { id: "pasos", title: "Cómo Funciona" },
-  { id: "tecnologia", title: "Arbitrum Stylus & DKIM" },
-  { id: "demo", title: "Simulación en Vivo" },
-  { id: "principios", title: "Principios & Cierre" },
+const FadeInSection = ({ children }: { children: React.ReactNode }) => {
+  const [isVisible, setVisible] = useState(false);
+  const domRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => setVisible(entry.isIntersecting));
+    });
+    const currentElement = domRef.current;
+    if (currentElement) {
+      observer.observe(currentElement);
+    }
+    return () => {
+      if (currentElement) {
+        observer.unobserve(currentElement);
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      ref={domRef}
+      className={`transition-all duration-1000 ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      }`}
+    >
+      {children}
+    </div>
+  );
+};
+
+// Data for REDAM chart
+const redamData = [
+  { year: "2021", cases: 421 },
+  { year: "2022", cases: 994 },
+  { year: "2023", cases: 3115 },
+  { year: "2024", cases: 7495 },
+  { year: "2025", cases: 8000 },
+  { year: "2026", cases: 18223 },
 ];
 
 export function PitchPresentation() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [simulatedState, setSimulatedState] = useState<"pendiente" | "validando" | "verificado">("pendiente");
-  const [activeTab, setActiveTab] = useState<"bcp" | "eml" | "stylus">("bcp");
-
-  const goToSlide = useCallback((index: number) => {
-    if (index >= 0 && index < SLIDES.length) {
-      setCurrentSlide(index);
-    }
-  }, []);
-
-  const nextSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev < SLIDES.length - 1 ? prev + 1 : prev));
-  }, []);
-
-  const prevSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev > 0 ? prev - 1 : prev));
-  }, []);
+  const [isMounted, setIsMounted] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === "Space" || e.key === "PageDown") {
-        e.preventDefault();
-        nextSlide();
-      } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
-        e.preventDefault();
-        prevSlide();
-      } else if (e.key === "Home") {
-        e.preventDefault();
-        goToSlide(0);
-      } else if (e.key === "End") {
-        e.preventDefault();
-        goToSlide(SLIDES.length - 1);
-      } else if (e.key === "f" || e.key === "F") {
-        toggleFullscreen();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [nextSlide, prevSlide, goToSlide]);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-      setIsFullscreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
-        setIsFullscreen(false);
-      }
-    }
-  };
-
-  const handleSimulateUpload = () => {
-    setSimulatedState("validando");
-    setTimeout(() => {
-      setSimulatedState("verificado");
-    }, 1800);
-  };
-
-  const handleResetSimulation = () => {
-    setSimulatedState("pendiente");
-  };
+    setIsMounted(true);
+  }, []);
 
   return (
-    <div className="relative flex flex-col min-h-screen w-full select-none overflow-hidden bg-paper text-ink">
-      {/* Top Controls & Navigation Header */}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-grid-line bg-paper/85 px-4 py-3 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="text-xs font-semibold tracking-tight text-ink transition-colors hover:text-signal"
-          >
-            CONSTANCIA
-          </Link>
-          <span className="text-grid-line">|</span>
-          <span className="rounded bg-panel px-2 py-0.5 text-[11px] font-mono text-signal tracking-wide border border-grid-line">
-            PITCH ETHLIMA 2026
-          </span>
-        </div>
-
-        {/* Slide Indicator & Quick Select */}
-        <div className="hidden md:flex items-center gap-1.5">
-          {SLIDES.map((slide, idx) => (
-            <button
-              key={slide.id}
-              onClick={() => goToSlide(idx)}
-              className={`h-7 px-2.5 text-xs font-mono transition-all rounded ${
-                currentSlide === idx
-                  ? "bg-signal/20 text-signal border border-signal/40 font-bold"
-                  : "text-ink-muted hover:text-ink hover:bg-panel"
-              }`}
-              title={`Diapositiva ${idx + 1}: ${slide.title}`}
-            >
-              0{idx + 1}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={toggleFullscreen}
-            className="flex h-8 w-8 items-center justify-center rounded border border-grid-line bg-panel text-ink-muted hover:text-ink transition-colors"
-            title="Pantalla completa (F)"
-          >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </button>
-
-          <Link
-            href="/"
-            className="btn-instrumento hidden sm:inline-flex h-8 items-center justify-center rounded border border-signal/40 bg-signal/10 px-3 text-xs font-medium text-signal hover:bg-signal/20"
-          >
-            Probar App
-          </Link>
-        </div>
-      </header>
-
-      {/* Slide Progress Bar */}
-      <div className="h-1 w-full bg-panel">
-        <div
-          className="h-full bg-signal transition-all duration-300 ease-out"
-          style={{ width: `${((currentSlide + 1) / SLIDES.length) * 100}%` }}
-        />
+    <div className="min-h-screen bg-[#080c13] text-slate-200 font-sans relative overflow-hidden">
+      {/* Background space pattern */}
+      <div
+        className="fixed inset-0 z-0 opacity-40 pointer-events-none"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at center, #080c13 0%, #040609 100%)",
+        }}
+      >
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iODAwIj48ZyBmaWxsPSIjZmZmIiBvcGFjaXR5PSIuMSI+PGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iMSIvPjxjaXJjbGUgY3g9IjI1MCIgY3k9Ijk1IiByPSIxLjUiIGZpbGw9IiMwNmI2ZDQiLz48Y2lyY2xlIGN4PSI3MjAiIGN5PSIzMDAiIHI9IjEiLz48Y2lyY2xlIGN4PSI0NTAiIGN5PSI1NTAiIHI9IjEiIGZpbGw9IiMwNmI2ZDQiLz48Y2lyY2xlIGN4PSIxNzAiIGN5PSI3MDAiIHI9IjEiLz48L2c+PC9zdmc+')] bg-repeat" />
       </div>
 
-      {/* Slide Canvas Body */}
-      <main className="flex-1 flex items-center justify-center p-4 md:p-8 lg:p-12 overflow-y-auto">
-        <div className="max-w-4xl w-full mx-auto">
-          {/* SLIDE 0: PORTADA */}
-          {currentSlide === 0 && (
-            <div className="lectura space-y-8 text-center py-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-signal/30 bg-signal/10 px-3 py-1 text-xs font-mono text-signal">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>ethLima 2026 · Track Arbitrum Stylus</span>
-              </div>
+      {/* Hero Section */}
+      <section className="relative z-10 min-h-screen flex flex-col justify-center items-center text-center px-4 pt-20">
+        <div className="inline-flex items-center gap-2 rounded-full border border-[#06b6d4]/40 bg-[#06b6d4]/10 px-3 py-1 text-xs font-mono text-[#06b6d4] mb-6">
+          <Sparkles className="h-3.5 w-3.5" />
+          <span>ethLima Hackathon 2026 · Track Arbitrum Stylus</span>
+        </div>
 
-              <div className="space-y-4">
-                <WordRotate
-                  words={[
-                    "Constancia",
-                    "Prueba de Pago",
-                    "Cero Fricción",
-                    "Evidencia On-Chain",
-                    "Justicia Familiar"
-                  ]}
-                  className="text-4xl sm:text-6xl font-bold tracking-tight text-ink"
-                />
+        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight">
+          Constancia
+        </h1>
+        <p className="text-xl md:text-2xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+          Convertimos el correo que el banco ya te manda en una prueba de pago que nadie puede discutir.
+        </p>
 
-                <p className="text-xl sm:text-2xl font-light text-signal max-w-2xl mx-auto leading-relaxed">
-                  Prueba criptográfica del pago de una pensión de alimentos.
+        <Link
+          href="/nueva"
+          className="bg-slate-100 hover:bg-white text-slate-900 font-medium py-3 px-8 rounded-md text-lg transition-all transform hover:scale-[1.02] shadow-lg mb-12 inline-flex items-center gap-2"
+        >
+          <span>Registrar un acuerdo</span>
+          <ArrowRight className="h-5 w-5" />
+        </Link>
+
+        <p className="text-sm text-slate-500 max-w-lg mb-20 leading-relaxed">
+          Si ya tienes un acuerdo registrado, entra por el enlace que recibiste — no hace falta crear una cuenta.{" "}
+          <Link href="/recuperar" className="text-slate-300 underline underline-offset-4 hover:text-white">
+            ¿Lo perdiste?
+          </Link>{" "}
+          ·{" "}
+          <Link href="/perfil" className="text-slate-300 underline underline-offset-4 hover:text-white">
+            Ver mi perfil
+          </Link>
+        </p>
+
+        <div className="w-full max-w-4xl opacity-90 mt-4">
+          <p className="text-slate-500 text-sm mb-6 uppercase tracking-widest font-mono">
+            Cada acuerdo confirmado queda respaldado así:
+          </p>
+          <div className="grid grid-cols-3 border border-slate-800 rounded-lg overflow-hidden bg-[#0d121b] shadow-2xl">
+            <div className="p-4 border-r border-slate-800 flex flex-col items-center justify-center">
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider mb-2 font-mono">Banco</span>
+              <span className="font-mono text-white text-lg font-semibold">BCP</span>
+            </div>
+            <div className="p-4 border-r border-slate-800 flex flex-col items-center justify-center">
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider mb-2 font-mono">Verificación</span>
+              <span className="font-mono text-white text-lg font-semibold">Firma del banco</span>
+            </div>
+            <div className="p-4 flex flex-col items-center justify-center">
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider mb-2 font-mono">Registro</span>
+              <span className="font-mono text-[#06b6d4] text-lg font-semibold">Permanente</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Problem Section */}
+      <section className="py-24 relative z-10 bg-[#06090e]">
+        <div className="max-w-5xl mx-auto px-6">
+          <FadeInSection>
+            <div className="grid md:grid-cols-2 gap-16 items-center">
+              <div>
+                <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                  La carga de la prueba está al revés.
+                </h2>
+                <p className="text-lg text-slate-400 mb-6 leading-relaxed">
+                  Hoy, cuando un padre no paga la pensión, la madre tiene que probar que el dinero no llegó. Tiene que ir al juzgado, presentar estados de cuenta y demostrar un hecho negativo.
                 </p>
-
-                <p className="text-base text-ink-muted max-w-xl mx-auto leading-relaxed pt-2">
-                  Convertimos el correo electrónico que el banco ya envía automáticamente en una prueba indiscutible e inmutable, sin integrar al banco y sin pedirle una wallet a los padres.
+                <p className="text-lg text-slate-400 leading-relaxed">
+                  La burocracia de la evidencia asume que el impago es un accidente, no una infracción.
                 </p>
               </div>
-
-              {/* Status Display Simulation */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto pt-4 text-left font-mono">
-                <div className="bg-panel border border-signal/40 p-3 rounded">
-                  <div className="flex items-center justify-between text-xs text-signal">
-                    <span>ESTADO ON-CHAIN</span>
-                    <CheckCircle2 className="h-4 w-4" />
+              <div className="bg-[#111827]/80 border border-slate-800 p-8 rounded-2xl relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 left-0 w-1 h-full bg-red-500/80"></div>
+                <div className="text-slate-300 space-y-4">
+                  <div className="flex items-center gap-4 opacity-50">
+                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-mono text-sm">1</div>
+                    <span>No recibe el depósito</span>
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-ink">Verificado</div>
-                </div>
-
-                <div className="bg-panel border border-amber/40 p-3 rounded">
-                  <div className="flex items-center justify-between text-xs text-amber">
-                    <span>EN ESPERA</span>
-                    <Clock className="h-4 w-4" />
+                  <div className="flex items-center gap-4 opacity-50">
+                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-mono text-sm">2</div>
+                    <span>Pide estados de cuenta al banco</span>
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-ink">Pendiente</div>
-                </div>
-
-                <div className="bg-panel border border-danger/40 p-3 rounded">
-                  <div className="flex items-center justify-between text-xs text-danger">
-                    <span>INCUMPLIMIENTO</span>
-                    <AlertTriangle className="h-4 w-4" />
+                  <div className="flex items-center gap-4 opacity-50">
+                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-mono text-sm">3</div>
+                    <span>Presenta escrito al juzgado</span>
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-ink">Vencido</div>
+                  <div className="flex items-center gap-4 bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                    <div className="w-8 h-8 rounded-full bg-red-900/40 text-red-400 flex items-center justify-center border border-red-500/30 font-mono text-sm font-bold">4</div>
+                    <span className="text-white font-medium">Espera meses por una resolución</span>
+                  </div>
                 </div>
-              </div>
-
-              <div className="pt-6">
-                <button
-                  onClick={nextSlide}
-                  className="btn-instrumento min-h-[48px] inline-flex items-center justify-center rounded border border-ink bg-ink px-8 py-3 text-base font-medium text-paper hover:bg-transparent hover:text-ink transition-all"
-                >
-                  <span>Ver la Presentación</span>
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </button>
               </div>
             </div>
-          )}
+          </FadeInSection>
+        </div>
+      </section>
 
-          {/* SLIDE 1: EL PROBLEMA */}
-          {currentSlide === 1 && (
-            <div className="lectura space-y-6 py-4">
-              <div className="flex items-center gap-2 text-xs font-mono text-danger uppercase tracking-wider">
-                <AlertCircle className="h-4 w-4" />
-                <span>01 / El Problema Real</span>
-              </div>
-
-              <h2 className="text-2xl sm:text-4xl font-bold tracking-tight leading-tight">
-                "El 5 de cada mes debía llegar la pensión. Es 19 y no llegó."
-              </h2>
-
-              <p className="text-base text-ink-muted leading-relaxed">
-                No llegó en julio tampoco, y en junio llegó la mitad. La madre ya pidió un adelanto y reorganizó los gastos de su hogar.
+      {/* Solution Section */}
+      <section className="py-24 relative z-10">
+        <div className="max-w-5xl mx-auto px-6">
+          <FadeInSection>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Invertimos la evidencia</h2>
+              <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                Con Constancia, el silencio de quien no paga se convierte automáticamente en evidencia lista para el juez.
               </p>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <div className="bg-panel border border-grid-line p-5 rounded space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-amber">
-                    <Clock className="h-4 w-4" />
-                    <span>La Carga Invisible</span>
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                {
+                  icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
+                  title: "1. El banco envía un correo",
+                  desc: "El pagador hace el depósito como siempre. El banco le envía un correo automático confirmando la transferencia."
+                },
+                {
+                  icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
+                  title: "2. Verificamos la firma DKIM",
+                  desc: "Leemos la firma criptográfica (DKIM) que el banco ya incluyó en ese correo para probar que es auténtico. Sin integrarnos al banco."
+                },
+                {
+                  icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10",
+                  title: "3. Registro Inmutable",
+                  desc: "Se anota en un registro público permanente si el pago ocurrió antes de la fecha. Si no hay constancia, hay incumplimiento."
+                }
+              ].map((step, i) => (
+                <div key={i} className="bg-[#111827]/80 p-8 rounded-2xl border border-slate-800 text-center hover:border-slate-700 transition-colors">
+                  <div className="w-16 h-16 mx-auto bg-slate-800/50 rounded-full flex items-center justify-center mb-6 border border-slate-700">
+                    <svg className="w-8 h-8 text-[#06b6d4]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={step.icon} />
+                    </svg>
                   </div>
-                  <p className="text-sm text-ink-muted leading-relaxed">
-                    La pensión que no llega <strong className="text-ink font-medium">no desaparece</strong>: la termina pagando la madre con horas extra, segundo trabajo y privaciones. El tiempo de crianza perdido nunca se recupera.
-                  </p>
+                  <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
+                  <p className="text-slate-400 leading-relaxed text-sm">{step.desc}</p>
                 </div>
+              ))}
+            </div>
+          </FadeInSection>
+        </div>
+      </section>
 
-                <div className="bg-panel border border-grid-line p-5 rounded space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-danger">
-                    <Scale className="h-4 w-4" />
-                    <span>Probar un Hecho Negativo</span>
-                  </div>
-                  <p className="text-sm text-ink-muted leading-relaxed">
-                    A la madre le toca probar que <strong className="text-ink font-medium">algo no ocurrió</strong>. Un proceso con abogados y juzgados cuesta más dinero y tiempo que la pensión que se reclama.
-                  </p>
+      {/* Demo Section */}
+      <section className="py-24 relative z-10 bg-[#06090e]">
+        <div className="max-w-5xl mx-auto px-6">
+          <FadeInSection>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Demo Funcional</h2>
+              <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                El producto real en funcionamiento. Así se transforma el correo automático del banco en un certificado legal inmutable.
+              </p>
+            </div>
+
+            <div className="relative rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(6,182,212,0.15)] border border-slate-800 bg-[#080c13] mx-auto max-w-4xl">
+              {/* Browser bar */}
+              <div className="flex items-center gap-2 px-4 py-3 bg-[#0d121b] border-b border-slate-800/60">
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500/60"></div>
+                  <div className="w-3 h-3 rounded-full bg-amber-500/60"></div>
+                  <div className="w-3 h-3 rounded-full bg-emerald-500/60"></div>
+                </div>
+                <div className="ml-4 px-3 py-1.5 bg-[#1a2332] rounded-md text-xs text-slate-400 font-mono truncate w-full max-w-md flex items-center gap-2 border border-slate-800">
+                  <svg className="w-3 h-3 text-[#06b6d4]" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"></path>
+                  </svg>
+                  <span>localhost:3000/o/bJ2zBgCfaWEL-kFjYVmgl1GXvWFbsQoT</span>
                 </div>
               </div>
 
-              <div className="bg-panel border-l-4 border-l-signal border border-grid-line p-4 rounded text-sm text-ink-muted italic leading-relaxed">
-                "El costo real de una pensión impaga no es solo monetario: se mide en las horas que esa madre deja de estar con su hijo para cubrir lo que otro no cubrió."
+              {/* Demo screenshot image or interactive UI fallback */}
+              {!imgError ? (
+                <img
+                  src="image_f6f972.png"
+                  alt="Pantalla real de Constancia mostrando un pago verificado con retraso"
+                  onError={() => setImgError(true)}
+                  className="w-full h-auto block transform transition-transform duration-700 hover:scale-[1.01]"
+                />
+              ) : (
+                <div className="p-8 space-y-6 bg-[#0a0a0c] font-sans text-left">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-3 w-3 rounded-full bg-[#06b6d4] animate-pulse" />
+                      <span className="font-mono text-sm font-semibold text-white">Acuerdo #BCP-2026-8492</span>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[#06b6d4]/10 text-[#06b6d4] font-mono text-xs border border-[#06b6d4]/30">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      <span>VERIFICADO ON-CHAIN</span>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+                    <div className="bg-[#111827] p-4 rounded border border-slate-800">
+                      <div className="text-slate-500 uppercase text-[10px]">Monto Mensual</div>
+                      <div className="text-xl font-bold text-white mt-1">S/ 650.00</div>
+                    </div>
+                    <div className="bg-[#111827] p-4 rounded border border-slate-800">
+                      <div className="text-slate-500 uppercase text-[10px]">Día de Pago</div>
+                      <div className="text-xl font-bold text-white mt-1">05 de cada mes</div>
+                    </div>
+                    <div className="bg-[#111827] p-4 rounded border border-slate-800">
+                      <div className="text-slate-500 uppercase text-[10px]">Firma Validada</div>
+                      <div className="text-xl font-bold text-[#06b6d4] mt-1">DKIM BCP RSA-2048</div>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#111827] p-4 rounded border border-slate-800 space-y-2 font-mono text-xs">
+                    <div className="text-slate-400 flex justify-between">
+                      <span>Hash del Commitment:</span>
+                      <span className="text-[#06b6d4] truncate max-w-[240px]">0x7f83a...b912</span>
+                    </div>
+                    <div className="text-slate-400 flex justify-between">
+                      <span>Precompilado Stylus:</span>
+                      <span className="text-slate-200">MODEXP + SHA256 (Gas: 0.00004 ETH)</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </FadeInSection>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-24 relative z-10 border-y border-slate-800/50 bg-[#06090e]/50">
+        <div className="max-w-6xl mx-auto px-6">
+          <FadeInSection>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Un sistema colapsado</h2>
+              <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                El problema de la evidencia crece exponencialmente. En Perú, los deudores inscritos en el REDAM aumentaron más de 4200% desde 2021.
+              </p>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-12 mb-16">
+              <div className="bg-[#111827]/80 p-6 rounded-2xl border border-slate-800 shadow-xl">
+                <h3 className="text-lg font-medium text-slate-300 mb-6">Deudores Alimentarios (REDAM Perú)</h3>
+                <div className="h-[300px] w-full">
+                  {isMounted ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={redamData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                        <XAxis dataKey="year" stroke="#64748b" tick={{ fill: "#64748b" }} axisLine={false} tickLine={false} />
+                        <YAxis stroke="#64748b" tick={{ fill: "#64748b" }} axisLine={false} tickLine={false} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: "#0f172a", borderColor: "#1e293b", color: "#f8fafc" }}
+                          itemStyle={{ color: "#06b6d4" }}
+                        />
+                        <Bar dataKey="cases" fill="#06b6d4" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-slate-500 font-mono text-xs">
+                      Cargando gráfico...
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-center gap-6">
+                <div className="bg-[#111827]/80 p-8 rounded-2xl border border-slate-800">
+                  <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 font-mono">Crisis Internacional</div>
+                  <div className="text-4xl font-light text-white mb-2">$117 Billones</div>
+                  <p className="text-slate-400 text-sm">Deuda acumulada por pensiones de alimentos solo en Estados Unidos.</p>
+                </div>
+                <div className="bg-[#111827]/80 p-8 rounded-2xl border border-slate-800">
+                  <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 font-mono">Impacto Regional</div>
+                  <div className="text-4xl font-light text-white mb-2">66%</div>
+                  <p className="text-slate-400 text-sm">Hogares monoparentales en Argentina que no reciben la pensión a tiempo y completa (UNICEF).</p>
+                </div>
               </div>
             </div>
-          )}
 
-          {/* SLIDE 2: LAS CIFRAS INVISIBLES */}
-          {currentSlide === 2 && (
-            <div className="lectura space-y-6 py-4">
-              <div className="flex items-center gap-2 text-xs font-mono text-signal uppercase tracking-wider">
-                <FileText className="h-4 w-4" />
-                <span>02 / La Realidad de las Cifras</span>
-              </div>
-
-              <h2 className="text-2xl sm:text-4xl font-bold tracking-tight">
-                El sesgo del registro oficial
-              </h2>
-
-              <div className="bg-panel border border-grid-line p-6 rounded grid grid-cols-1 sm:grid-cols-3 gap-6 items-center">
-                <div className="text-center sm:text-left space-y-1">
-                  <div className="text-4xl sm:text-5xl font-mono font-bold text-signal">8,000</div>
-                  <div className="text-xs font-mono text-ink-muted">Inscritos en el REDAM (Perú)</div>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { metric: "100%", title: "Automatización", desc: "La creación de evidencia legal ocurre sin intervención manual." },
+                { metric: "0", title: "Cuentas Cripto", desc: "Ni la madre ni el padre necesitan saber qué es una wallet." },
+                { metric: "S/ 0", title: "Costo Judicial", desc: "Probar el pago o el impago deja de costar más que la pensión." }
+              ].map((stat, i) => (
+                <div key={i} className="bg-[#111827]/80 p-6 rounded-2xl border-t-2 border-[#06b6d4] shadow-sm">
+                  <div className="text-4xl font-mono text-[#06b6d4] mb-2 font-bold">{stat.metric}</div>
+                  <h4 className="font-bold text-white mb-2">{stat.title}</h4>
+                  <p className="text-slate-400 text-sm leading-relaxed">{stat.desc}</p>
                 </div>
-
-                <div className="sm:col-span-2 text-sm text-ink-muted leading-relaxed border-t sm:border-t-0 sm:border-l border-grid-line pt-4 sm:pt-0 sm:pl-6">
-                  <p>
-                    Esa cifra <strong className="text-ink font-medium">no significa</strong> que solo 8,000 personas incumplan en el país. Significa que para entrar al registro hace falta un juicio completo de 3 años.
-                  </p>
-                  <p className="mt-2 text-xs text-amber font-mono">
-                    La enorme mayoría nunca denuncia porque el camino cuesta más de lo que se debe.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center font-mono">
-                <div className="bg-panel border border-grid-line p-4 rounded space-y-1">
-                  <div className="text-xs text-ink-muted">01</div>
-                  <div className="text-sm font-semibold text-ink">Lo que no se prueba, no se registra</div>
-                </div>
-                <div className="bg-panel border border-grid-line p-4 rounded space-y-1">
-                  <div className="text-xs text-ink-muted">02</div>
-                  <div className="text-sm font-semibold text-ink">Lo que no se registra, no existe</div>
-                </div>
-                <div className="bg-panel border border-grid-line p-4 rounded space-y-1">
-                  <div className="text-xs text-ink-muted">03</div>
-                  <div className="text-sm font-semibold text-ink">Lo que no existe, no se corrige</div>
-                </div>
-              </div>
-
-              <div className="text-center text-sm font-medium text-ink">
-                Constancia hace que la prueba exista <strong className="text-signal">desde el primer día</strong>.
-              </div>
+              ))}
             </div>
-          )}
+          </FadeInSection>
+        </div>
+      </section>
 
-          {/* SLIDE 3: EL PITCH & SOLUCION */}
-          {currentSlide === 3 && (
-            <div className="lectura space-y-6 py-4">
-              <div className="flex items-center gap-2 text-xs font-mono text-signal uppercase tracking-wider">
-                <Sparkles className="h-4 w-4" />
-                <span>03 / El Pitch de Solución</span>
-              </div>
+      {/* Tech Section */}
+      <section className="py-24 relative z-10 bg-[#080c13]">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <FadeInSection>
+            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4 font-mono">Under the hood</h2>
+            <h3 className="text-3xl font-bold text-white mb-8">Construido para escalar</h3>
 
-              <div className="bg-panel border border-signal/40 p-6 rounded text-center space-y-4">
-                <blockquote className="text-xl sm:text-2xl font-semibold text-ink leading-snug">
-                  "Ninguna madre debería tener que contratar un abogado para probar que este mes no le pagaron la comida de su hijo."
-                </blockquote>
-                <p className="text-sm text-signal font-mono">
-                  Convertimos el correo que el banco ya te manda en una prueba que nadie puede discutir.
+            <div className="grid md:grid-cols-2 gap-6 text-left">
+              <div className="p-6 border border-slate-800 rounded-xl bg-[#0d121b]">
+                <div className="font-mono text-[#06b6d4] mb-2 font-semibold">Arbitrum Stylus + Rust</div>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  El contrato inteligente verifica la firma RSA de 2048-bits del banco directamente on-chain utilizando precompiles nativos (MODEXP y SHA256), logrando una validación barata que sería inviable en la EVM tradicional.
                 </p>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-panel border border-grid-line p-5 rounded space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-                    <HeartHandshake className="h-4 w-4 text-signal" />
-                    <span>Sin Custodia</span>
-                  </div>
-                  <p className="text-xs text-ink-muted leading-relaxed">
-                    El sistema nunca toca ni custodia dinero. El dinero viaja por BCP/Yape exactamente como hoy. Se certifica el hecho.
-                  </p>
-                </div>
-
-                <div className="bg-panel border border-grid-line p-5 rounded space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-                    <RotateCcw className="h-4 w-4 text-signal" />
-                    <span>Inversión de Carga</span>
-                  </div>
-                  <p className="text-xs text-ink-muted leading-relaxed">
-                    Quien paga deja rastro automático. Quien no paga genera silencio, y ese silencio es la evidencia computable.
-                  </p>
-                </div>
-
-                <div className="bg-panel border border-grid-line p-5 rounded space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-                    <Lock className="h-4 w-4 text-signal" />
-                    <span>Cero Jerga Web3</span>
-                  </div>
-                  <p className="text-xs text-ink-muted leading-relaxed">
-                    Sin wallets, sin gas, sin hashes visibles para los padres. Login por enlace mágico de correo sin contraseñas.
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-panel border border-grid-line p-4 rounded flex items-center justify-between text-xs font-mono text-ink-muted">
-                <span>REAPROVECHAMIENTO DKIM</span>
-                <span className="text-signal">Reutilizamos la firma criptográfica que el banco emite para protegerse</span>
-              </div>
-            </div>
-          )}
-
-          {/* SLIDE 4: COMO FUNCIONA EN 3 PASOS */}
-          {currentSlide === 4 && (
-            <div className="lectura space-y-6 py-4">
-              <div className="flex items-center gap-2 text-xs font-mono text-signal uppercase tracking-wider">
-                <Zap className="h-4 w-4" />
-                <span>04 / Cómo Funciona en 3 Pasos</span>
-              </div>
-
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                Simplicidad total para los padres
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-panel border border-grid-line p-5 rounded relative flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-mono font-bold text-signal">01</span>
-                      <span className="text-xs font-mono text-ink-muted">UNA SOLA VEZ</span>
-                    </div>
-                    <h3 className="text-base font-semibold text-ink">Se acuerda</h3>
-                    <p className="text-xs text-ink-muted leading-relaxed">
-                      Ambas partes definen monto, día de pago y correo electrónico. Se genera un enlace mágico de acceso.
-                    </p>
-                  </div>
-                  <div className="mt-4 pt-3 border-t border-grid-line text-[11px] font-mono text-ink-muted">
-                    Sin crear cuenta ni contraseña
-                  </div>
-                </div>
-
-                <div className="bg-panel border border-grid-line p-5 rounded relative flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-mono font-bold text-signal">02</span>
-                      <span className="text-xs font-mono text-ink-muted">CERO FRICCIÓN</span>
-                    </div>
-                    <h3 className="text-base font-semibold text-ink">Se paga como siempre</h3>
-                    <p className="text-xs text-ink-muted leading-relaxed">
-                      Vía BCP, Yape o transferencia habitual. El banco emite su correo automático de confirmación firmado.
-                    </p>
-                  </div>
-                  <div className="mt-4 pt-3 border-t border-grid-line text-[11px] font-mono text-ink-muted">
-                    El banco no sabe que existimos
-                  </div>
-                </div>
-
-                <div className="bg-panel border border-signal/50 p-5 rounded relative flex flex-col justify-between">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-mono font-bold text-signal">03</span>
-                      <span className="text-xs font-mono text-signal">AUTOMÁTICO</span>
-                    </div>
-                    <h3 className="text-base font-semibold text-ink">Se prueba solo</h3>
-                    <p className="text-xs text-ink-muted leading-relaxed">
-                      Se sube el comprobante (.eml). El contrato valida la firma DKIM y asienta la pensión. Si vence sin pago, el incumplimiento queda registrado.
-                    </p>
-                  </div>
-                  <div className="mt-4 pt-3 border-t border-grid-line text-[11px] font-mono text-signal">
-                    On-Chain inmutable
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* SLIDE 5: ARBITRUM STYLUS & TECNOLOGIA */}
-          {currentSlide === 5 && (
-            <div className="lectura space-y-6 py-4">
-              <div className="flex items-center gap-2 text-xs font-mono text-signal uppercase tracking-wider">
-                <Cpu className="h-4 w-4" />
-                <span>05 / Innovación en Arbitrum Stylus</span>
-              </div>
-
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                Verificación DKIM en Smart Contracts (Rust)
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-panel border border-grid-line p-5 rounded space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-signal">
-                    <ShieldCheck className="h-4 w-4" />
-                    <span>Contrato inteligente Stylus (Rust)</span>
-                  </div>
-                  <p className="text-xs text-ink-muted leading-relaxed">
-                    Escrito en Rust compilado a WebAssembly. Aprovecha los precompilados <code className="text-signal bg-paper px-1 rounded">MODEXP</code> y <code className="text-signal bg-paper px-1 rounded">SHA256</code> para verificar firmas RSA/SHA-256 de correos bancarios directamente on-chain con costo de gas ultra-bajo.
-                  </p>
-                  <div className="text-[11px] font-mono text-ink-muted">
-                    ✓ 18/18 tests pasando, verificados con correos BCP reales.
-                  </div>
-                </div>
-
-                <div className="bg-panel border border-grid-line p-5 rounded space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-signal">
-                    <Lock className="h-4 w-4" />
-                    <span>Privacidad: Salt + Commitment</span>
-                  </div>
-                  <p className="text-xs text-ink-muted leading-relaxed">
-                    Para proteger los datos de la receptora (número de cuenta y nombre), el contrato almacena únicamente un commitment hash encriptado con un salt aleatorio, evitando ataques de fuerza bruta en 10,000 combinaciones.
-                  </p>
-                  <div className="text-[11px] font-mono text-ink-muted">
-                    ✓ Cero fuga de datos personales en la blockchain.
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-panel border border-grid-line p-4 rounded grid grid-cols-1 sm:grid-cols-3 gap-3 text-center text-xs font-mono">
-                <div>
-                  <span className="text-ink-muted">Red:</span>{" "}
-                  <span className="text-ink font-semibold">Arbitrum Sepolia</span>
-                </div>
-                <div>
-                  <span className="text-ink-muted">Relayer:</span>{" "}
-                  <span className="text-ink font-semibold">Wallet de Servicio (0 Gas User)</span>
-                </div>
-                <div>
-                  <span className="text-ink-muted">Stack:</span>{" "}
-                  <span className="text-ink font-semibold">Next.js 15 + Drizzle + Rust</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* SLIDE 6: SIMULACION EN VIVO */}
-          {currentSlide === 6 && (
-            <div className="lectura space-y-6 py-4">
-              <div className="flex items-center gap-2 text-xs font-mono text-signal uppercase tracking-wider">
-                <FileUp className="h-4 w-4" />
-                <span>06 / Demostración en Vivo</span>
-              </div>
-
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
-                Simulador del Instrumento de Calibración
-              </h2>
-
-              <div className="bg-panel border border-grid-line p-6 rounded space-y-6">
-                {/* Tabs selection */}
-                <div className="flex border-b border-grid-line gap-4 text-xs font-mono">
-                  <button
-                    onClick={() => setActiveTab("bcp")}
-                    className={`pb-2 border-b-2 transition-colors ${
-                      activeTab === "bcp" ? "border-signal text-signal font-semibold" : "border-transparent text-ink-muted hover:text-ink"
-                    }`}
-                  >
-                    1. Correo BCP
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("eml")}
-                    className={`pb-2 border-b-2 transition-colors ${
-                      activeTab === "eml" ? "border-signal text-signal font-semibold" : "border-transparent text-ink-muted hover:text-ink"
-                    }`}
-                  >
-                    2. Cabecera DKIM
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("stylus")}
-                    className={`pb-2 border-b-2 transition-colors ${
-                      activeTab === "stylus" ? "border-signal text-signal font-semibold" : "border-transparent text-ink-muted hover:text-ink"
-                    }`}
-                  >
-                    3. Contrato Stylus
-                  </button>
-                </div>
-
-                {activeTab === "bcp" && (
-                  <div className="space-y-3 text-xs font-mono text-ink-muted bg-paper p-4 rounded border border-grid-line">
-                    <div className="text-ink font-semibold">De: Banco de Crédito del Perú &lt;bcpnotificaciones@bcp.com.pe&gt;</div>
-                    <div>Asunto: Confirmación de transferencia realizada</div>
-                    <div className="text-signal">Monto: S/ 650.00 · Fecha: 05 de Agosto de 2026</div>
-                    <div>Cuenta Destino: **** 4921</div>
-                  </div>
-                )}
-
-                {activeTab === "eml" && (
-                  <div className="space-y-2 text-[11px] font-mono text-ink-muted bg-paper p-4 rounded border border-grid-line overflow-x-auto">
-                    <div>DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=bcp.com.pe;</div>
-                    <div>s=s2024; h=from:to:subject:date:message-id;</div>
-                    <div className="text-signal break-all">bh=k8Z92xQ1L...; b=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgK...</div>
-                  </div>
-                )}
-
-                {activeTab === "stylus" && (
-                  <div className="space-y-2 text-[11px] font-mono text-ink-muted bg-paper p-4 rounded border border-grid-line">
-                    <div className="text-signal">pub fn verificar_comprobante(host: &Host, dkim_bytes: Vec&lt;u8&gt;) -&gt; Result&lt;bool, Error&gt;</div>
-                    <div>1. Extraer RSA exponente & modulus desde precompilado MODEXP</div>
-                    <div>2. Calcular hash SHA-256 de cabeceras canónicas</div>
-                    <div>3. Validar commitment de pensión de alimentos del mes actual</div>
-                  </div>
-                )}
-
-                {/* Simulation Control */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-grid-line">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-mono text-ink-muted">Estado Actual:</span>
-                    {simulatedState === "pendiente" && (
-                      <span className="inline-flex items-center gap-1.5 rounded bg-amber-bg px-2.5 py-1 text-xs font-mono text-amber border border-amber/40">
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>PENDIENTE (Esperando .eml)</span>
-                      </span>
-                    )}
-                    {simulatedState === "validando" && (
-                      <span className="inline-flex items-center gap-1.5 rounded bg-panel px-2.5 py-1 text-xs font-mono text-signal border border-signal/40 animate-pulse">
-                        <Sparkles className="h-3.5 w-3.5 animate-spin" />
-                        <span>VERIFICANDO EN ARBITRUM STYLUS...</span>
-                      </span>
-                    )}
-                    {simulatedState === "verificado" && (
-                      <span className="inline-flex items-center gap-1.5 rounded bg-signal/15 px-2.5 py-1 text-xs font-mono text-signal border border-signal/40 font-semibold">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span>VERIFICADO ON-CHAIN</span>
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    {simulatedState === "pendiente" && (
-                      <button
-                        onClick={handleSimulateUpload}
-                        className="btn-instrumento inline-flex items-center justify-center rounded border border-signal bg-signal px-4 py-2 text-xs font-medium text-paper hover:bg-transparent hover:text-signal"
-                      >
-                        <FileUp className="mr-1.5 h-3.5 w-3.5" />
-                        Simular Carga de Comprobante .eml
-                      </button>
-                    )}
-                    {simulatedState === "verificado" && (
-                      <button
-                        onClick={handleResetSimulation}
-                        className="btn-instrumento inline-flex items-center justify-center rounded border border-grid-line bg-paper px-3 py-2 text-xs font-medium text-ink-muted hover:text-ink"
-                      >
-                        <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                        Reiniciar
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* SLIDE 7: PRINCIPIOS & CIERRE */}
-          {currentSlide === 7 && (
-            <div className="lectura space-y-6 py-4">
-              <div className="flex items-center gap-2 text-xs font-mono text-signal uppercase tracking-wider">
-                <HeartHandshake className="h-4 w-4" />
-                <span>07 / Principios & Cierre</span>
-              </div>
-
-              <h2 className="text-2xl sm:text-4xl font-bold tracking-tight">
-                Principios Innegociables de Constancia
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="bg-panel border border-grid-line p-4 rounded space-y-1">
-                  <div className="font-semibold text-signal font-mono">1. El sistema no toca el dinero</div>
-                  <div className="text-ink-muted">Certifica un hecho indiscutible, nunca mueve ni custodia fondos.</div>
-                </div>
-                <div className="bg-panel border border-grid-line p-4 rounded space-y-1">
-                  <div className="font-semibold text-signal font-mono">2. La mejor acción es la que no existe</div>
-                  <div className="text-ink-muted">Nadie debe acordarse de generar la prueba o denunciar. Pagar o no pagar produce la evidencia.</div>
-                </div>
-                <div className="bg-panel border border-grid-line p-4 rounded space-y-1">
-                  <div className="font-semibold text-signal font-mono">3. Cero jerga cripto, siempre</div>
-                  <div className="text-ink-muted">Diseñado para personas reales que nunca usaron una wallet ni tienen por qué aprender qué es.</div>
-                </div>
-                <div className="bg-panel border border-grid-line p-4 rounded space-y-1">
-                  <div className="font-semibold text-signal font-mono">4. El fallo técnico nunca culpa</div>
-                  <div className="text-ink-muted">Cualquier error de red o firma jamás se interpreta ni muestra como incumplimiento.</div>
-                </div>
-              </div>
-
-              <div className="bg-panel border border-signal/40 p-6 rounded text-center space-y-4">
-                <h3 className="text-2xl font-bold tracking-tight text-ink">
-                  Constancia · ethLima 2026
-                </h3>
-                <p className="text-sm text-ink-muted max-w-lg mx-auto">
-                  La prueba criptográfica que protege a los hijos y devuelve la tranquilidad a las madres desde el primer día.
+              <div className="p-6 border border-slate-800 rounded-xl bg-[#0d121b]">
+                <div className="font-mono text-[#06b6d4] mb-2 font-semibold">Account Abstraction (Relayer)</div>
+                <p className="text-sm text-slate-400 leading-relaxed">
+                  Una wallet de servicio asume los costos de gas. Los usuarios finales no interactúan con tokens ni firman transacciones, superando la mayor barrera de adopción para herramientas legales en web3.
                 </p>
-
-                <div className="pt-2 flex flex-wrap justify-center gap-3">
-                  <Link
-                    href="/nueva"
-                    className="btn-instrumento inline-flex items-center justify-center rounded border border-signal bg-signal px-6 py-2.5 text-sm font-medium text-paper hover:bg-transparent hover:text-signal"
-                  >
-                    <span>Registrar Acuerdo en Demo</span>
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-
-                  <Link
-                    href="/"
-                    className="btn-instrumento inline-flex items-center justify-center rounded border border-grid-line bg-paper px-6 py-2.5 text-sm font-medium text-ink hover:border-ink"
-                  >
-                    Volver al Inicio
-                  </Link>
-                </div>
               </div>
             </div>
-          )}
+          </FadeInSection>
         </div>
-      </main>
+      </section>
 
-      {/* Bottom Footer Controls */}
-      <footer className="sticky bottom-0 z-30 flex items-center justify-between border-t border-grid-line bg-paper/90 px-4 py-3 backdrop-blur-md">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={prevSlide}
-            disabled={currentSlide === 0}
-            className="flex h-9 items-center gap-1 rounded border border-grid-line bg-panel px-3 text-xs font-mono text-ink transition-colors hover:bg-paper disabled:opacity-30 disabled:pointer-events-none"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            <span>Anterior</span>
-          </button>
-
-          <button
-            onClick={nextSlide}
-            disabled={currentSlide === SLIDES.length - 1}
-            className="flex h-9 items-center gap-1 rounded border border-signal/40 bg-signal/15 px-3 text-xs font-mono text-signal font-semibold transition-colors hover:bg-signal/25 disabled:opacity-30 disabled:pointer-events-none"
-          >
-            <span>Siguiente</span>
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="text-xs font-mono text-ink-muted">
-          Diapositiva <span className="text-signal font-bold">{currentSlide + 1}</span> de{" "}
-          <span>{SLIDES.length}</span> — <span className="hidden sm:inline">{SLIDES[currentSlide].title}</span>
-        </div>
-
-        <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-ink-muted">
-          <span>Usa ⬅️ ➡️ o Espacio para navegar</span>
+      {/* Footer */}
+      <footer className="border-t border-slate-800 py-12 relative z-10 bg-[#040609]">
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <div className="text-2xl font-bold text-white mb-4">Constancia</div>
+          <p className="text-slate-500 text-sm font-mono">ethLima Hackathon 2026</p>
         </div>
       </footer>
     </div>
   );
 }
+
+export default PitchPresentation;
