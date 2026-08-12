@@ -1,0 +1,3 @@
+[submodule "constancia"]
+	path = constancia
+	url = https://github.com/hackathon-ethLima-2026/constancia.git
