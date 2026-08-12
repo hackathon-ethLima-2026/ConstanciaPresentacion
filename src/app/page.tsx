@@ -1,11 +1,11 @@
-import { PitchPresentation } from "@/components/PitchPresentation";
+import ConstanciaPitch from "@/components/PitchPresentation";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Constancia — Presentación Pitch ethLima 2026",
-  description: "Presentación interactiva de Constancia App para ethLima 2026 (Track Arbitrum Stylus)",
+  title: "Constancia — La constancia de pago que se genera sola",
+  description: "Transformamos el correo automático del banco en una prueba legal inmutable de la pensión de alimentos. ethLima 2026.",
 };
 
 export default function Home() {
-  return <PitchPresentation />;
+  return <ConstanciaPitch />;
 }
