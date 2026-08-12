@@ -1,0 +1,222 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+:root {
+  /* DECISIÓN REVERTIDA A PROPÓSITO (confirmada dos veces con el usuario, ver conversación):
+     el diseño original era hoja clara por legibilidad al sol en mobile. Este cambio a panel
+     de misión oscuro pisa esa razón para toda la app, incluidos los flujos reales de
+     receptora/pagador — no solo la landing. Si en algún momento se reporta un problema real de
+     legibilidad al sol, éste es el primer sospechoso; revertir es cambiar solo estos 12 valores,
+     el resto del producto no toca color directo en ningún lado (ver grep, todo pasa por tokens). */
+  --paper: oklch(18% 0.025 255);
+  --panel: oklch(23% 0.03 255);
+  --grid-line: oklch(34% 0.035 255);
+  --ink: oklch(95% 0.008 255);
+  --ink-muted: oklch(68% 0.02 255);
+  --signal: oklch(78% 0.13 200);
+  --signal-ink: oklch(85% 0.1 200);
+  --amber: oklch(78% 0.14 70);
+  --amber-bg: oklch(26% 0.05 70);
+  --danger: oklch(74% 0.16 25);
+  --danger-bg: oklch(26% 0.06 25);
+
+  /* shadcn/ui remapeado al mismo mundo — nunca la paleta gris oklch por defecto: cualquier
+     componente que se agregue después hereda el instrumento de calibración, no un tema aparte. */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--panel);
+  --card-foreground: var(--ink);
+  --popover: var(--panel);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: var(--panel);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper);
+  --muted-foreground: var(--ink-muted);
+  --accent: color-mix(in srgb, var(--signal) 12%, var(--panel));
+  --accent-foreground: var(--signal-ink);
+  --destructive: var(--danger);
+  --border: var(--grid-line);
+  --input: var(--grid-line);
+  --ring: var(--signal);
+  /* Radio chico — el mundo de instrumento de calibración pide bordes rectos, pero 4px suaviza
+     lo justo sin volver a las tarjetas redondeadas genéricas de antes. */
+  --radius: 0.25rem;
+
+  /* Canon de movimiento — instantáneo se lee como calibrado, nunca "ease" de navegador. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --dur-short: 150ms;
+  --dur-med: 300ms;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-panel: var(--panel);
+  --color-grid-line: var(--grid-line);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-signal: var(--signal);
+  --color-signal-ink: var(--signal-ink);
+  --color-amber: var(--amber);
+  --color-amber-bg: var(--amber-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --font-ui: var(--font-ui);
+  --font-data: var(--font-data);
+  --font-sans: var(--font-ui);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+}
+
+/* Fondo reemplazado por ASMRStaticBackground (canvas animado, ver layout.tsx) a pedido
+   explícito — sustituye el campo de estrellas estático que vivía aquí. */
+body {
+  position: relative;
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+.tabular {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
+
+/* Botón/CTA primario — press tokenizado, nunca `transition-all`. */
+.btn-instrumento {
+  transition: background-color var(--dur-med) var(--ease-out), color var(--dur-med) var(--ease-out),
+    transform var(--dur-short) var(--ease-out);
+}
+.btn-instrumento:active {
+  transform: translateY(1px);
+  transition-duration: 100ms;
+}
+
+/* Fila de acuerdo — un tick de acento se revela a la izquierda, en vez de un fondo genérico.
+   Es la misma lógica visual que "verificado" en el resto del producto: una marca fija, no un
+   efecto decorativo. */
+.fila-acuerdo {
+  position: relative;
+  transition: background-color var(--dur-med) var(--ease-out);
+}
+.fila-acuerdo::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--signal);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform var(--dur-short) var(--ease-out);
+}
+.fila-acuerdo:hover::before,
+.fila-acuerdo:focus-within::before {
+  transform: scaleY(1);
+}
+.fila-acuerdo:hover,
+.fila-acuerdo:focus-within {
+  background: color-mix(in srgb, var(--signal) 6%, var(--panel));
+}
+
+/* Lectura del período — un único asentamiento al cargar, sin JS. La lectura llega, se fija,
+   no vuelve a moverse: es el mismo principio que la traza de calibración, aplicado a datos
+   reales en vez de un motivo decorativo. */
+@media (prefers-reduced-motion: no-preference) {
+  .lectura {
+    transition: opacity var(--dur-med) var(--ease-out), transform var(--dur-med) var(--ease-out);
+    transition-behavior: allow-discrete;
+  }
+  @starting-style {
+    .lectura {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+}
+
+/* Entrada escalonada de una sola vez — CSS puro, sin JS, se salta con reduced-motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .lista-entrada > * {
+    transition: opacity var(--dur-med) var(--ease-out), transform var(--dur-med) var(--ease-out);
+    transition-behavior: allow-discrete;
+  }
+  .lista-entrada > *:nth-child(1) { transition-delay: 0ms; }
+  .lista-entrada > *:nth-child(2) { transition-delay: 60ms; }
+  .lista-entrada > *:nth-child(3) { transition-delay: 120ms; }
+  .lista-entrada > *:nth-child(4) { transition-delay: 180ms; }
+  .lista-entrada > *:nth-child(n + 5) { transition-delay: 220ms; }
+
+  @starting-style {
+    .lista-entrada > * {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+}
+
+/* Estrellas fugaces — solo en el hero, tres, cada una en su propio ciclo largo (el brillo
+   visible dura ~5% del ciclo, el resto es pausa) para que no se sientan repetitivas ni
+   compitan con la lectura del instrumento. Tier A, CSS puro. */
+.estrellas-fugaces span {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 6px 1px var(--ink);
+  opacity: 0;
+  animation: fugaz 7s linear infinite;
+}
+.estrellas-fugaces span::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: 70px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ink));
+  transform: translateY(-50%);
+}
+.estrellas-fugaces span:nth-child(1) { top: 15%; left: 70%; animation-delay: 0s; }
+.estrellas-fugaces span:nth-child(2) { top: 55%; left: 20%; animation-delay: 2.6s; animation-duration: 9s; }
+.estrellas-fugaces span:nth-child(3) { top: 30%; left: 45%; animation-delay: 5.2s; animation-duration: 11s; }
+@keyframes fugaz {
+  0% { opacity: 0; transform: translate(0, 0) rotate(-35deg); }
+  2% { opacity: 1; }
+  6% { opacity: 0; transform: translate(-160px, 110px) rotate(-35deg); }
+  100% { opacity: 0; transform: translate(-160px, 110px) rotate(-35deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .estrellas-fugaces { display: none; }
+}
