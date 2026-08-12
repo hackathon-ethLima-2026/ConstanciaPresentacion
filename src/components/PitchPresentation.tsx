@@ -21,6 +21,7 @@ import {
   Terminal,
   TrendingUp,
   Clock,
+  Download,
   Ban,
   Globe
 } from "lucide-react";
@@ -69,23 +70,39 @@ const FadeInSection = ({ children, delay = 0 }: { children: React.ReactNode; del
   );
 };
 
+const handlePrintPDF = () => {
+  if (typeof window !== "undefined") {
+    window.print();
+  }
+};
+
 const Header = () => (
-  <header className="fixed top-0 w-full bg-[#0a0a0c]/85 backdrop-blur-md border-b border-slate-800/80 z-50 transition-all duration-300">
+  <header className="fixed top-0 w-full bg-[#0a0a0c]/85 backdrop-blur-md border-b border-slate-800/80 z-50 transition-all duration-300 no-print">
     <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
       <div className="flex items-center gap-2 group cursor-pointer">
         <Scale className="text-[#06b6d4] w-6 h-6 group-hover:scale-110 transition-transform" />
         <span className="font-bold text-xl text-white tracking-tight">Constancia</span>
       </div>
-      <div className="text-sm font-bold text-[#06b6d4] bg-[#06b6d4]/10 border border-[#06b6d4]/30 px-4 py-1.5 rounded-full flex items-center gap-2">
-        <Rocket className="w-4 h-4" />
-        ethLima 2026
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handlePrintPDF}
+          className="text-xs font-mono font-bold text-slate-300 hover:text-white bg-[#111827] hover:bg-[#182236] border border-slate-700 px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer"
+          title="Descargar o Guardar como PDF"
+        >
+          <Download className="w-3.5 h-3.5 text-[#06b6d4]" />
+          <span>Descargar PDF</span>
+        </button>
+        <div className="text-sm font-bold text-[#06b6d4] bg-[#06b6d4]/10 border border-[#06b6d4]/30 px-4 py-1.5 rounded-full flex items-center gap-2">
+          <Rocket className="w-4 h-4" />
+          ethLima 2026
+        </div>
       </div>
     </div>
   </header>
 );
 
 const HeroSection = () => (
-  <section className="min-h-screen flex flex-col justify-center items-center px-6 pt-20 bg-transparent text-center relative overflow-hidden">
+  <section className="min-h-screen flex flex-col justify-center items-center px-6 pt-24 bg-transparent text-center relative overflow-hidden">
     {/* Spatial lighting effects */}
     <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#06b6d4]/15 rounded-full blur-3xl pointer-events-none"></div>
     <div className="absolute bottom-1/3 right-1/4 w-[30rem] h-[30rem] bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -114,7 +131,7 @@ const HeroSection = () => (
       </FadeInSection>
       
       <FadeInSection delay={450}>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
           <button 
             onClick={() => document.getElementById('stats')?.scrollIntoView({ behavior: 'smooth' })}
             className="group bg-[#06b6d4] hover:bg-[#00d8e6] text-[#0a0a0c] font-bold px-8 py-4 rounded-xl transition-all shadow-[0_0_25px_rgba(6,182,212,0.35)] flex items-center gap-3 w-full sm:w-auto justify-center text-lg cursor-pointer"
@@ -123,6 +140,36 @@ const HeroSection = () => (
             <span>Conocer el impacto</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
+          
+          <button
+            onClick={handlePrintPDF}
+            className="bg-[#111827] hover:bg-[#182236] text-white border border-slate-700 font-bold px-7 py-4 rounded-xl transition-all flex items-center gap-2.5 w-full sm:w-auto justify-center text-lg cursor-pointer shadow-lg"
+          >
+            <Download className="w-5 h-5 text-[#06b6d4]" />
+            <span>Descargar en PDF</span>
+          </button>
+        </div>
+      </FadeInSection>
+
+      {/* Annexed Image Preview (image.png) */}
+      <FadeInSection delay={550}>
+        <div className="relative mx-auto max-w-3xl rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(6,182,212,0.2)] border border-slate-800 bg-[#0d121c] p-2">
+          <div className="flex items-center justify-between px-4 py-2 bg-[#0a0a0c] rounded-t-xl border-b border-slate-800 text-xs font-mono text-slate-400">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#06b6d4]"></span>
+              <span className="text-white font-semibold">Demostración Real de la App · Constancia</span>
+            </div>
+            <span className="text-[#06b6d4] bg-[#06b6d4]/10 px-2 py-0.5 rounded border border-[#06b6d4]/30">
+              Verificado On-Chain
+            </span>
+          </div>
+          <div className="relative overflow-hidden rounded-b-xl">
+            <img
+              src="/image.png"
+              alt="Constancia App Real Interface Preview"
+              className="w-full h-auto block transform hover:scale-[1.01] transition-transform duration-500 rounded-b-xl"
+            />
+          </div>
         </div>
       </FadeInSection>
     </div>
