@@ -131,7 +131,7 @@ const HeroSection = () => (
       </FadeInSection>
       
       <FadeInSection delay={450}>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+        <div className="flex justify-center items-center mb-12">
           <button 
             onClick={() => document.getElementById('stats')?.scrollIntoView({ behavior: 'smooth' })}
             className="group bg-[#06b6d4] hover:bg-[#00d8e6] text-[#0a0a0c] font-bold px-8 py-4 rounded-xl transition-all shadow-[0_0_25px_rgba(6,182,212,0.35)] flex items-center gap-3 w-full sm:w-auto justify-center text-lg cursor-pointer"
@@ -140,35 +140,64 @@ const HeroSection = () => (
             <span>Conocer el impacto</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
-          
-          <button
-            onClick={handlePrintPDF}
-            className="bg-[#111827] hover:bg-[#182236] text-white border border-slate-700 font-bold px-7 py-4 rounded-xl transition-all flex items-center gap-2.5 w-full sm:w-auto justify-center text-lg cursor-pointer shadow-lg"
-          >
-            <Download className="w-5 h-5 text-[#06b6d4]" />
-            <span>Descargar en PDF</span>
-          </button>
         </div>
       </FadeInSection>
 
-      {/* Annexed Image Preview (image.png) */}
+      {/* Code-rendered UI Preview Card (Pixel-perfect, 0 artifacts) */}
       <FadeInSection delay={550}>
-        <div className="relative mx-auto max-w-3xl rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(6,182,212,0.2)] border border-slate-800 bg-[#0d121c] p-2">
-          <div className="flex items-center justify-between px-4 py-2 bg-[#0a0a0c] rounded-t-xl border-b border-slate-800 text-xs font-mono text-slate-400">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#06b6d4]"></span>
-              <span className="text-white font-semibold">Demostración Real de la App · Constancia</span>
+        <div className="relative mx-auto max-w-3xl rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(6,182,212,0.25)] border border-slate-800 bg-[#0d121c] p-3 text-left">
+          {/* Top mock browser / app bar */}
+          <div className="flex items-center justify-between px-4 py-3 bg-[#0a0a0c] rounded-xl border border-slate-800/80 mb-3 text-xs font-mono">
+            <div className="flex items-center gap-2.5">
+              <Scale className="w-4 h-4 text-[#06b6d4]" />
+              <span className="text-white font-bold tracking-tight">Constancia · App Demo</span>
             </div>
-            <span className="text-[#06b6d4] bg-[#06b6d4]/10 px-2 py-0.5 rounded border border-[#06b6d4]/30">
-              Verificado On-Chain
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#06b6d4] animate-pulse"></span>
+              <span className="text-[#06b6d4] bg-[#06b6d4]/10 px-2.5 py-1 rounded border border-[#06b6d4]/30 font-bold">
+                VERIFICADO ON-CHAIN
+              </span>
+            </div>
           </div>
-          <div className="relative overflow-hidden rounded-b-xl">
-            <img
-              src="/image.png"
-              alt="Constancia App Real Interface Preview"
-              className="w-full h-auto block transform hover:scale-[1.01] transition-transform duration-500 rounded-b-xl"
-            />
+
+          {/* Interface Card Content */}
+          <div className="bg-[#111827] rounded-xl border border-slate-800 p-5 md:p-6 space-y-5 font-sans">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-4">
+              <div>
+                <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400">Certificado de Pensión de Alimentos</span>
+                <h3 className="text-xl font-bold text-white mt-0.5">Acuerdo #BCP-2026-8492</h3>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-semibold">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Pago Cumplido a Tiempo</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+              <div className="bg-[#182030] p-3.5 rounded-lg border border-slate-800">
+                <div className="text-slate-400 text-[10px] uppercase">Monto Verificado</div>
+                <div className="text-lg font-bold text-white mt-1">S/ 650.00 PEN</div>
+              </div>
+              <div className="bg-[#182030] p-3.5 rounded-lg border border-slate-800">
+                <div className="text-slate-400 text-[10px] uppercase">Banco Emisor</div>
+                <div className="text-lg font-bold text-[#06b6d4] mt-1">BCP Notificaciones</div>
+              </div>
+              <div className="bg-[#182030] p-3.5 rounded-lg border border-slate-800">
+                <div className="text-slate-400 text-[10px] uppercase">Firma Digital</div>
+                <div className="text-lg font-bold text-white mt-1">DKIM RSA-2048</div>
+              </div>
+            </div>
+
+            <div className="bg-[#182030]/80 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-xs">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center text-slate-300 gap-1">
+                <span className="text-slate-400">Precompilado Stylus (Rust):</span>
+                <span className="text-[#06b6d4] font-semibold">MODEXP + SHA256 (Arbitrum Sepolia)</span>
+              </div>
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center text-slate-300 gap-1 border-t border-slate-800/80 pt-2">
+                <span className="text-slate-400">Hash del Commitment Hash:</span>
+                <span className="text-slate-200 truncate max-w-[280px]">0x9f83a21b47c9d08e2f6a...</span>
+              </div>
+            </div>
           </div>
         </div>
       </FadeInSection>
